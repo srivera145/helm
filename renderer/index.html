@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+<title>Helm</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- First-run setup screen: shown until Helm has generated configs and
+       initialized its own MySQL data directory from the bundled binaries -->
+  <section id="setup-screen" class="screen hidden">
+    <div class="setup-card">
+      <div class="setup-eyebrow">First run</div>
+      <h1>Set up your local server</h1>
+      <p class="setup-copy">
+        Helm ships Apache, PHP, and MySQL inside itself &mdash; nothing else to
+        download. This one-time step generates your server config and
+        initializes a fresh MySQL data directory. It takes under a minute.
+      </p>
+      <div id="setup-progress" class="setup-progress hidden">
+        <div class="setup-progress-step" id="setup-progress-text">Starting&hellip;</div>
+      </div>
+      <div id="setup-error" class="setup-error hidden"></div>
+      <button id="continue-btn" class="btn btn-brass btn-wide">Set up Helm</button>
+    </div>
+  </section>
+
+  <!-- Main control panel -->
+  <section id="main-screen" class="screen hidden">
+
+    <header class="topbar">
+      <div class="wordmark">
+        <span class="wordmark-main">HELM</span>
+        <span class="wordmark-sub">local server control &mdash; companion to Keel</span>
+      </div>
+      <button id="settings-btn" class="btn btn-ghost btn-small">Settings</button>
+    </header>
+
+    <div class="bridge">
+
+      <!-- Apache gauge -->
+      <article class="station" data-service="apache">
+        <div class="station-head">
+          <h2>Apache</h2>
+          <span class="port-tag">:80</span>
+        </div>
+        <div class="gauge-wrap">
+          <img class="gauge-img" data-gauge="apache" src="assets/gauge-standby.png" alt="Apache status gauge" />
+        </div>
+        <div class="state-line"><span class="state-dot" data-dot="apache"></span><span data-state-text="apache">Checking&hellip;</span></div>
+        <div class="controls">
+          <button class="btn btn-brass" data-action="start" data-target="apache">Start</button>
+          <button class="btn btn-ghost" data-action="stop" data-target="apache">Stop</button>
+          <button class="btn btn-ghost" data-action="restart" data-target="apache">Restart</button>
+        </div>
+        <div class="controls-secondary">
+          <label class="autostart"><input type="checkbox" data-autostart="apache" /> Start with Windows</label>
+          <div class="secondary-actions">
+            <button class="link-btn" data-action="open" data-target="apache">Open site</button>
+            <button class="link-btn" data-action="open-htdocs" data-target="apache">Open htdocs</button>
+            <button class="link-btn" data-action="log" data-target="apache">View log</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- MySQL gauge -->
+      <article class="station" data-service="mysql">
+        <div class="station-head">
+          <h2>MySQL</h2>
+          <span class="port-tag">:3306</span>
+        </div>
+        <div class="gauge-wrap">
+          <img class="gauge-img" data-gauge="mysql" src="assets/gauge-standby.png" alt="MySQL status gauge" />
+        </div>
+        <div class="state-line"><span class="state-dot" data-dot="mysql"></span><span data-state-text="mysql">Checking&hellip;</span></div>
+        <div class="controls">
+          <button class="btn btn-brass" data-action="start" data-target="mysql">Start</button>
+          <button class="btn btn-ghost" data-action="stop" data-target="mysql">Stop</button>
+          <button class="btn btn-ghost" data-action="restart" data-target="mysql">Restart</button>
+        </div>
+        <div class="controls-secondary">
+          <label class="autostart"><input type="checkbox" data-autostart="mysql" /> Start with Windows</label>
+          <div class="secondary-actions">
+            <button class="link-btn" data-action="open-pma" data-target="mysql">phpMyAdmin</button>
+            <button class="link-btn" data-action="log" data-target="mysql">View log</button>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Not-installed banner -->
+    <div id="install-banner" class="banner hidden">
+      <span>Apache and MySQL aren't registered as Windows services yet. Helm needs to do this once &mdash; Windows will ask you to approve it.</span>
+      <button id="install-btn" class="btn btn-brass btn-small">Register services</button>
+    </div>
+
+    <!-- Port conflict banner -->
+    <div id="port-banner" class="banner banner-warn hidden"></div>
+
+    <footer class="statusbar">
+      <span id="status-text">Reading service status&hellip;</span>
+    </footer>
+  </section>
+
+  <!-- Log / recovery drawer -->
+  <aside id="log-drawer" class="drawer hidden">
+    <div class="drawer-head">
+      <h3 id="log-drawer-title">Log</h3>
+      <button id="close-drawer" class="btn btn-ghost btn-small">Close</button>
+    </div>
+    <div id="issues-panel" class="issues-panel hidden">
+      <div class="issues-title">Detected in this log</div>
+      <ul id="issues-list"></ul>
+      <button id="recover-btn" class="btn btn-warn hidden">Attempt clean recovery</button>
+      <div id="recovery-result" class="recovery-result hidden"></div>
+    </div>
+    <pre id="log-text" class="log-text"></pre>
+  </aside>
+
+  <!-- Settings drawer -->
+  <aside id="settings-drawer" class="drawer hidden">
+    <div class="drawer-head">
+      <h3>Settings</h3>
+      <button id="close-settings" class="btn btn-ghost btn-small">Close</button>
+    </div>
+    <div class="settings-body">
+      <label class="settings-label">Install location</label>
+      <div id="settings-data-root" class="data-root-display">&mdash;</div>
+      <div class="path-row">
+        <button id="rerun-setup-btn" class="btn btn-ghost">Re-run setup</button>
+      </div>
+
+      <div class="settings-divider"></div>
+
+      <label class="settings-label">Check for port conflicts</label>
+      <div class="path-row">
+        <button class="btn btn-ghost" data-check-port="80">Check :80</button>
+        <button class="btn btn-ghost" data-check-port="3306">Check :3306</button>
+      </div>
+      <div id="port-check-result" class="port-check-result"></div>
+
+      <div class="settings-divider"></div>
+      <button id="uninstall-btn" class="btn btn-danger-outline">Unregister Windows services</button>
+    </div>
+  </aside>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

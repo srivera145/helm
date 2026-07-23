@@ -1,0 +1,49 @@
+{
+  "name": "helm",
+  "productName": "Helm",
+  "version": "0.1.0",
+  "description": "A stable local dev server control panel for Apache, PHP, and MySQL on Windows \u2014 built to replace XAMPP's control panel and its InnoDB corruption problem. Companion tool to Keel.",
+  "author": "Santos Rivera / EchoDial LLC",
+  "license": "MIT",
+  "homepage": "https://get-keel.dev",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:server": "powershell -ExecutionPolicy Bypass -File server-build/fetch-binaries.ps1",
+    "dist": "electron-builder --win"
+  },
+  "build": {
+    "appId": "dev.get-keel.helm",
+    "productName": "Helm",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/server",
+        "to": "server",
+        "filter": ["**/*"]
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "sudo-prompt": "^9.2.1"
+  }
+}
