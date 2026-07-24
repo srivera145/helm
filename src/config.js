@@ -96,6 +96,19 @@ function paths() {
       vcRedistInstaller: path.join(root, 'prereqs', 'vc_redist.x64.exe')
     },
 
+    vhosts: {
+      registryFile: path.join(root, 'vhosts.json'),
+      confFile: path.join(root, 'apache', 'conf', 'vhosts-helm.conf'),
+      sitesDir: path.join(root, 'sites')
+    },
+
+    backups: {
+      dir: path.join(root, 'backups'),
+      mysqldumpBinary: path.join(root, 'mysql', 'bin', 'mysqldump.exe'),
+      mariadbDumpBinary: path.join(root, 'mysql', 'bin', 'mariadb-dump.exe'),
+      mysqlBinary: path.join(root, 'mysql', 'bin', 'mysql.exe')
+    },
+
     htdocs: path.join(root, 'htdocs')
   };
 }

@@ -1,5 +1,7 @@
 # Helm
 
+![Helm — Apache, MySQL, PHP](build/banner.jpg)
+
 A local server for Apache, PHP, MySQL, and phpMyAdmin on Windows &mdash; one
 installer, nothing else to download. Built to replace XAMPP and the InnoDB
 corruption problem that comes with it. Companion tool to [Keel](https://get-keel.dev).
@@ -164,15 +166,32 @@ scripts/
     setup has already run once via the app)
 ```
 
+## Sites and backups
+
+- **Sites panel** (top bar): give a project its own `*.local` domain instead
+  of a folder under `localhost` &mdash; e.g. `claimiq.local` instead of
+  `localhost/claimiq`. Adding a site writes a Windows hosts file entry
+  (delimited by marker comments, so it never touches anything else already
+  in that file) and an Apache `<VirtualHost>` block, both regenerated from
+  a single `vhosts.json` registry so removing a site cleans up completely.
+  Only `*.local` domains are ever accepted &mdash; the hosts file is
+  security-sensitive, and this guarantees Helm can never be pointed at a
+  real public domain.
+- **Database backup** (Settings): one-click `mysqldump --all-databases`
+  snapshot. This is the actual guarantee behind the log-aware InnoDB
+  recovery in `recovery.js`, which is explicitly best-effort automation of
+  a manual rescue, not a promise. Checks for both `mysqldump.exe` and
+  `mariadb-dump.exe` at call time rather than assuming one name, since
+  MariaDB has been renaming its client tools.
+
 ## What Helm does not do (yet)
 
-- Doesn't manage per-project vhosts or the hosts file (e.g. `keel.local`
-  style domains) &mdash; that's still manual Apache config for now.
-- InnoDB recovery is a best-effort automation of a manual process, not a
-  guarantee. Keep real backups.
 - PHP loads into Apache as `mod_php` (matches how XAMPP itself runs it).
-  Isolating PHP into its own FastCGI process is a reasonable future
-  improvement for stability, just not in v1.
+  Isolating PHP into its own FastCGI process would let a PHP crash stay
+  contained instead of taking Apache down with it &mdash; a reasonable
+  future improvement for stability, but a bigger, riskier change (new
+  bundled Apache module, a different PHP process model) that hasn't been
+  attempted yet.
 
 ## License
 

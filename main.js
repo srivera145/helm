@@ -1,6 +1,6 @@
 // main.js -- Electron main process
 
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const path = require('path');
 
 const cfg = require('./src/config');
@@ -9,6 +9,8 @@ const serviceManager = require('./src/serviceManager');
 const portChecker = require('./src/portChecker');
 const logWatcher = require('./src/logWatcher');
 const recovery = require('./src/recovery');
+const vhosts = require('./src/vhosts');
+const backup = require('./src/backup');
 
 let mainWindow;
 
@@ -178,5 +180,71 @@ ipcMain.handle('shell:open', (_evt, url) => {
     return { ok: false, error: 'Only http://localhost URLs can be opened' };
   }
   shell.openExternal(url);
+  return { ok: true };
+});
+
+// --- Sites (per-project *.local vhosts) --------------------------------
+
+// After any change, restart Apache if it's currently running so the new
+// site is immediately reachable rather than needing a manual restart --
+// but only if it's already running; don't start it just for this.
+async function restartApacheIfRunning() {
+  const p = cfg.paths();
+  const status = await serviceManager.queryServiceStatus(p.apache.serviceName);
+  if (status.state === 'RUNNING') {
+    await serviceManager.restartService(p.apache.serviceName);
+    return true;
+  }
+  return false;
+}
+
+ipcMain.handle('vhosts:list', () => vhosts.listVhosts());
+
+ipcMain.handle('vhosts:pickFolder', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select the project folder to serve',
+    properties: ['openDirectory']
+  });
+  if (result.canceled || !result.filePaths[0]) return { ok: false, canceled: true };
+  return { ok: true, path: result.filePaths[0] };
+});
+
+ipcMain.handle('vhosts:add', async (_evt, { domain, docRoot }) => {
+  try {
+    const site = await vhosts.addVhost(domain, docRoot || null);
+    const restarted = await restartApacheIfRunning();
+    return { ok: true, site, restarted };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('vhosts:remove', async (_evt, domain) => {
+  try {
+    await vhosts.removeVhost(domain);
+    const restarted = await restartApacheIfRunning();
+    return { ok: true, restarted };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+// --- Backups -------------------------------------------------------------
+
+ipcMain.handle('backup:list', () => backup.listBackups());
+
+ipcMain.handle('backup:run', async () => {
+  try {
+    const result = await backup.runBackup();
+    return { ok: true, ...result };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('shell:openBackupsFolder', () => {
+  const p = cfg.paths();
+  require('fs').mkdirSync(p.backups.dir, { recursive: true });
+  shell.openPath(p.backups.dir);
   return { ok: true };
 });

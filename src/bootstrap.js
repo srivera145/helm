@@ -20,6 +20,7 @@ const crypto = require('crypto');
 const { execFile } = require('child_process');
 const { paths, diagnoseBinaries } = require('./config');
 const { ensureVCRedist } = require('./prereqs');
+const { regenerateVhostConf } = require('./vhosts');
 
 function ensureDir(p) {
   fs.mkdirSync(p, { recursive: true });
@@ -47,7 +48,6 @@ function generateApacheConf() {
 
 ServerRoot "${apacheServerRoot.replace(/\\/g, '/')}"
 Listen ${p.apache.port}
-ServerName localhost:${p.apache.port}
 ServerAdmin admin@localhost
 
 ${loadModuleLines.join('\n')}
@@ -68,31 +68,50 @@ PidFile "${p.apache.pidFile.replace(/\\/g, '/')}"
     Require all denied
 </Directory>
 
-DocumentRoot "${p.htdocs.replace(/\\/g, '/')}"
-<Directory "${p.htdocs.replace(/\\/g, '/')}">
-    Options Indexes FollowSymLinks
-    AllowOverride All
-    Require all granted
-</Directory>
-
-# phpMyAdmin lives as a sibling of htdocs (matching XAMPP's own C:\\xampp\\phpMyAdmin
-# layout, so it stays out of your actual project files) -- reachable via
-# an Alias rather than DocumentRoot, exactly how XAMPP's own httpd-xampp.conf does it.
-# Restricted to localhost: this auto-logs in as root with no password, so
-# it should never be reachable from anywhere but this machine.
-Alias /phpmyadmin "${p.phpMyAdmin.dataDir.replace(/\\/g, '/')}"
-<Directory "${p.phpMyAdmin.dataDir.replace(/\\/g, '/')}">
-    Options Indexes FollowSymLinks
-    AllowOverride All
-    Require local
-</Directory>
-
 DirectoryIndex index.php index.html
 
 # --- PHP integration ---
 LoadModule php_module "${p.php.apacheModule.replace(/\\/g, '/')}"
 AddHandler application/x-httpd-php .php
 PHPIniDir "${path.dirname(p.php.iniFile).replace(/\\/g, '/')}"
+
+# The default site (plain http://localhost/) is wrapped in its own explicit
+# VirtualHost rather than left as top-level DocumentRoot/Directory
+# directives. Apache only uses top-level DocumentRoot for requests it can't
+# match to any VirtualHost -- the moment per-project vhosts.json sites exist
+# (see the Include below), EVERY request on :80 gets routed through vhost
+# matching, and a plain top-level DocumentRoot would silently stop being
+# reachable. Defining localhost as the first, explicit VirtualHost keeps it
+# working as the default regardless of how many project sites get added.
+<VirtualHost *:${p.apache.port}>
+    ServerName localhost
+
+    DocumentRoot "${p.htdocs.replace(/\\/g, '/')}"
+    <Directory "${p.htdocs.replace(/\\/g, '/')}">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    # phpMyAdmin lives as a sibling of htdocs (matching XAMPP's own
+    # C:\\xampp\\phpMyAdmin layout, so it stays out of your actual project
+    # files) -- reachable via an Alias rather than DocumentRoot, exactly how
+    # XAMPP's own httpd-xampp.conf does it. Restricted to localhost: this
+    # auto-logs in as root with no password, so it should never be
+    # reachable from anywhere but this machine.
+    Alias /phpmyadmin "${p.phpMyAdmin.dataDir.replace(/\\/g, '/')}"
+    <Directory "${p.phpMyAdmin.dataDir.replace(/\\/g, '/')}">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require local
+    </Directory>
+</VirtualHost>
+
+# Per-project *.local domains, managed from the Sites panel. This file
+# always exists (regenerated from vhosts.json, empty-but-valid when no
+# sites are configured) -- Apache refuses to start if an Include target is
+# missing, so bootstrap always creates it even with zero sites.
+Include "${p.vhosts.confFile.replace(/\\/g, '/')}"
 `;
 
   fs.writeFileSync(p.apache.generatedConf, conf, 'utf8');
@@ -285,6 +304,7 @@ async function runBootstrap(onProgress = () => {}) {
   await ensureVCRedist(onProgress);
 
   onProgress('Setting up Apache configuration');
+  regenerateVhostConf();
   generateApacheConf();
 
   onProgress('Setting up PHP configuration');

@@ -293,4 +293,166 @@ document.querySelectorAll('[data-check-port]').forEach((btn) => {
   });
 });
 
+// ---------- Sites drawer ----------
+
+const sitesDrawer = document.getElementById('sites-drawer');
+let chosenSiteFolder = null;
+
+document.getElementById('sites-btn').addEventListener('click', () => {
+  sitesDrawer.classList.remove('hidden');
+  refreshSitesList();
+});
+document.getElementById('close-sites').addEventListener('click', () => {
+  sitesDrawer.classList.add('hidden');
+});
+
+document.getElementById('new-site-browse').addEventListener('click', async () => {
+  const res = await window.helm.pickSiteFolder();
+  if (res.ok) {
+    chosenSiteFolder = res.path;
+    const display = document.getElementById('new-site-folder-display');
+    display.textContent = res.path;
+    display.classList.remove('hidden');
+  }
+});
+
+document.getElementById('add-site-btn').addEventListener('click', async () => {
+  const input = document.getElementById('new-site-domain');
+  const errorBox = document.getElementById('add-site-error');
+  const btn = document.getElementById('add-site-btn');
+  errorBox.classList.add('hidden');
+
+  const domain = input.value.trim();
+  if (!domain) {
+    errorBox.textContent = 'Enter a domain, e.g. claimiq.local';
+    errorBox.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Adding\u2026';
+  const res = await window.helm.addSite(domain, chosenSiteFolder);
+  btn.disabled = false;
+  btn.textContent = 'Add site';
+
+  if (!res.ok) {
+    errorBox.textContent = res.error;
+    errorBox.classList.remove('hidden');
+    return;
+  }
+
+  input.value = '';
+  chosenSiteFolder = null;
+  document.getElementById('new-site-folder-display').classList.add('hidden');
+  statusText.textContent = res.restarted
+    ? `${res.site.domain} added and Apache restarted.`
+    : `${res.site.domain} added. Start Apache to make it reachable.`;
+  refreshSitesList();
+});
+
+async function refreshSitesList() {
+  const list = document.getElementById('sites-list');
+  const sites = await window.helm.listSites();
+
+  if (!sites.length) {
+    list.innerHTML = '<div class="sites-empty">No sites configured yet.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  sites.forEach((site) => {
+    const item = document.createElement('div');
+    item.className = 'site-item';
+    item.innerHTML = `
+      <div class="site-item-info">
+        <div class="site-item-domain">${site.domain}</div>
+        <div class="site-item-path" title="${site.docRoot}">${site.docRoot}</div>
+      </div>
+      <div class="site-item-actions">
+        <button class="btn btn-ghost btn-small" data-open-site="${site.domain}">Open</button>
+        <button class="btn btn-danger-outline btn-small" data-remove-site="${site.domain}">Remove</button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  list.querySelectorAll('[data-open-site]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      window.helm.openInBrowser(`http://${btn.dataset.openSite}/`);
+    });
+  });
+
+  list.querySelectorAll('[data-remove-site]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const domain = btn.dataset.removeSite;
+      const confirmed = confirm(`Remove ${domain}? This deletes the hosts file entry and Apache config, not the project folder itself.`);
+      if (!confirmed) return;
+      btn.disabled = true;
+      const res = await window.helm.removeSite(domain);
+      if (!res.ok) {
+        alert(`Could not remove ${domain}: ${res.error}`);
+        btn.disabled = false;
+        return;
+      }
+      statusText.textContent = res.restarted ? `${domain} removed and Apache restarted.` : `${domain} removed.`;
+      refreshSitesList();
+    });
+  });
+}
+
+// ---------- Backups ----------
+
+document.getElementById('run-backup-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('run-backup-btn');
+  const result = document.getElementById('backup-result');
+  btn.disabled = true;
+  btn.textContent = 'Backing up\u2026';
+  result.classList.add('hidden');
+
+  const res = await window.helm.runBackup();
+
+  btn.disabled = false;
+  btn.textContent = 'Backup now';
+  result.classList.remove('hidden');
+
+  if (res.ok) {
+    const sizeMb = (res.size / (1024 * 1024)).toFixed(1);
+    result.textContent = `Saved ${sizeMb} MB to ${res.path}`;
+    refreshBackupList();
+  } else {
+    result.textContent = res.error;
+  }
+});
+
+document.getElementById('open-backups-btn').addEventListener('click', () => {
+  window.helm.openBackupsFolder();
+});
+
+async function refreshBackupList() {
+  const list = document.getElementById('backup-list');
+  const backups = await window.helm.listBackups();
+
+  if (!backups.length) {
+    list.innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = '';
+  backups.slice(0, 5).forEach((b) => {
+    const sizeMb = (b.size / (1024 * 1024)).toFixed(1);
+    const when = new Date(b.createdAt).toLocaleString();
+    const item = document.createElement('div');
+    item.className = 'site-item';
+    item.innerHTML = `
+      <div class="site-item-info">
+        <div class="site-item-domain">${b.name}</div>
+        <div class="site-item-path">${sizeMb} MB &middot; ${when}</div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+document.getElementById('settings-btn').addEventListener('click', refreshBackupList);
+
 init();

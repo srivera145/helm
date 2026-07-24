@@ -218,6 +218,97 @@ button {
   border-bottom: 1px solid var(--hairline);
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sites-intro {
+  font-size: 13px;
+  color: var(--steel-grey);
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+}
+
+.sites-intro code, .sites-hint code {
+  font-family: var(--font-mono);
+  color: var(--fog-white);
+  background: var(--hull-black);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.sites-hint {
+  font-size: 12px;
+  color: var(--steel-grey);
+  line-height: 1.5;
+  margin: 6px 0 0 0;
+}
+
+.site-input {
+  width: 100%;
+  background: var(--hull-black);
+  border: 1px solid var(--hairline);
+  color: var(--fog-white);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 9px 10px;
+  border-radius: 3px;
+}
+.site-input:focus {
+  outline: 2px solid var(--brass);
+  outline-offset: 1px;
+}
+
+.sites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.site-item {
+  background: var(--hull-black);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.site-item-info {
+  min-width: 0;
+}
+
+.site-item-domain {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--brass-bright);
+}
+
+.site-item-path {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--steel-grey);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.site-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sites-empty {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--steel-grey);
+  padding: 8px 0;
+}
+
 .wordmark-main {
   font-family: var(--font-display);
   font-size: 22px;

@@ -24,5 +24,14 @@ contextBridge.exposeInMainWorld('helm', {
   tailLog: (key) => ipcRenderer.invoke('logs:tail', key),
   recoverMysql: () => ipcRenderer.invoke('recovery:mysql'),
   openInBrowser: (url) => ipcRenderer.invoke('shell:open', url),
-  openHtdocsFolder: () => ipcRenderer.invoke('shell:openHtdocsFolder')
+  openHtdocsFolder: () => ipcRenderer.invoke('shell:openHtdocsFolder'),
+
+  listSites: () => ipcRenderer.invoke('vhosts:list'),
+  pickSiteFolder: () => ipcRenderer.invoke('vhosts:pickFolder'),
+  addSite: (domain, docRoot) => ipcRenderer.invoke('vhosts:add', { domain, docRoot }),
+  removeSite: (domain) => ipcRenderer.invoke('vhosts:remove', domain),
+
+  listBackups: () => ipcRenderer.invoke('backup:list'),
+  runBackup: () => ipcRenderer.invoke('backup:run'),
+  openBackupsFolder: () => ipcRenderer.invoke('shell:openBackupsFolder')
 });
