@@ -69,15 +69,11 @@ function regenerateVhostConf() {
     <Directory "${docRoot.replace(/\\/g, '/')}">
         Options Indexes FollowSymLinks
         AllowOverride All
-<<<<<<< HEAD
         # Local-only by default: project folders can contain .env files,
         # vendor/, database dumps, etc. -- Require local means only this
         # machine can reach it, the same conservative default already used
         # for phpMyAdmin, rather than anything reachable on the network.
         Require local
-=======
-        Require all granted
->>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac
     </Directory>
 </VirtualHost>`).join('\n\n');
 
@@ -92,7 +88,6 @@ ${blocks || '# No sites configured yet.'}
 // Rewrites just the Helm-managed section of the hosts file, delimited by
 // marker comments, so any other entries already in there (real projects,
 // other tools) are left completely alone.
-<<<<<<< HEAD
 //
 // This previously trusted a clean PowerShell exit code as proof the write
 // succeeded -- but the script had no $ErrorActionPreference set, so
@@ -103,8 +98,6 @@ ${blocks || '# No sites configured yet.'}
 // reason writes fail even when elevated), and the file is read back
 // afterward to confirm the change is actually there before declaring
 // success.
-=======
->>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac
 async function syncHostsFile() {
   const list = loadRegistry();
   const entriesPath = path.join(os.tmpdir(), `helm-vhosts-${Date.now()}.json`);
@@ -113,7 +106,6 @@ async function syncHostsFile() {
   fs.writeFileSync(entriesPath, JSON.stringify(list.map((v) => ({ domain: v.domain }))), 'utf8');
 
   const script = `param([string]$EntriesFile)
-<<<<<<< HEAD
 $ErrorActionPreference = "Stop"
 
 # The hosts file is a common target for brief contention -- Windows' own
@@ -194,35 +186,6 @@ try {
   Write-Error "Hosts file sync failed: $($_.Exception.Message)"
   exit 1
 }
-=======
-
-$hostsPath = "$env:WINDIR\\System32\\drivers\\etc\\hosts"
-$entries = Get-Content $EntriesFile -Raw | ConvertFrom-Json
-if ($null -eq $entries) { $entries = @() }
-
-$startMarker = "# ===== HELM VHOSTS START ====="
-$endMarker = "# ===== HELM VHOSTS END ====="
-
-$content = ""
-if (Test-Path $hostsPath) { $content = Get-Content $hostsPath -Raw }
-if ($null -eq $content) { $content = "" }
-
-$pattern = "(?s)" + [regex]::Escape($startMarker) + ".*?" + [regex]::Escape($endMarker) + "\\r?\\n?"
-$content = [regex]::Replace($content, $pattern, "")
-$content = $content.TrimEnd()
-
-if ($entries.Count -gt 0) {
-  $block = "$startMarker\`r\`n"
-  foreach ($e in $entries) { $block += "127.0.0.1\`t$($e.domain)\`r\`n" }
-  $block += "$endMarker"
-  $content = $content + "\`r\`n\`r\`n" + $block + "\`r\`n"
-} else {
-  $content = $content + "\`r\`n"
-}
-
-Set-Content -Path $hostsPath -Value $content -NoNewline -Encoding ASCII
-Write-Host "Hosts file updated: $($entries.Count) Helm-managed entries"
->>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac
 `;
 
   fs.writeFileSync(scriptPath, script, 'utf8');

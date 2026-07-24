@@ -24,7 +24,7 @@ improper privileges, a crash, or a shutdown by another method.
 
 ## How Helm fixes it
 
-[Helm](https://helm.get-keel.dev) ships Apache, PHP, and MySQL (MariaDB) **inside the installer itself**.
+Helm ships Apache, PHP, and MySQL (MariaDB) **inside the installer itself**.
 There's no separate XAMPP download and no "point Helm at your existing
 install" step &mdash; you install Helm, it sets itself up, and Apache + MySQL
 are registered as **native Windows services** from the start.

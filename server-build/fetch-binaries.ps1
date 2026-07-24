@@ -204,20 +204,40 @@ Get-And-Expand $PhpMyAdminUrl "phpmyadmin" "phpmyadmin" "index.php"
 Get-File $VcRedistUrl "vcredist" (Join-Path $OutDir "prereqs\vc_redist.x64.exe")
 
 # PHP's extension DLLs (ext\php_curl.dll, ext\php_openssl.dll, etc.) depend
-# on shared runtime DLLs (libssl, libcrypto, etc.) that ship in PHP's root
-# folder, not ext\. When Apache runs as a Windows service rather than an
-# interactively-launched process, that root folder isn't reliably on the
-# service's DLL search path, which surfaces as "Unable to load dynamic
-# library" for otherwise-present extensions at Apache startup. PHP's own
-# extension loader always searches the same folder as the extension DLL
-# itself, so copying the root-level runtime DLLs into ext\ resolves this
-# unconditionally rather than depending on service environment quirks.
+# on shared runtime DLLs (libssl, libcrypto, libssh2, nghttp2, etc.) that
+# ship in PHP's root folder, not ext\. Copying them into ext\ alone
+# (previous fix) turned out not to be sufficient in practice -- curl kept
+# failing to load with the identical error even after confirming
+# php_curl.dll and its dependencies were all sitting right there. The
+# likely reason: Windows resolves a *loaded module's own dependencies*
+# relative to the directory of the main executable (httpd.exe, in
+# apache\bin\), not the directory of the DLL that pulled them in (ext\).
+# PHP's own lookup of the extension DLL itself correctly checks ext\ (that
+# part always worked -- php_curl.dll was found fine), but the OS-level
+# dependency resolution for that DLL's own dependencies follows the
+# standard Windows search order, which checks the main executable's
+# folder, not ext\. Copying the same runtime DLLs into apache\bin\ as well
+# covers that gap.
 # Runs every time (not just on a fresh PHP download) so it also fixes an
 # already-staged php\ folder from a previous run of this script.
 Write-Host "`n[php] Copying root runtime DLLs into ext\ for reliable extension loading..." -ForegroundColor Cyan
 $phpRoot = Join-Path $OutDir "php"
 $phpExt = Join-Path $phpRoot "ext"
 Get-ChildItem -Path $phpRoot -Filter "*.dll" -File -ErrorAction SilentlyContinue | Copy-Item -Destination $phpExt -Force
+
+Write-Host "[php] Also copying them into apache\bin\ -- Windows resolves a loaded" -ForegroundColor Cyan
+Write-Host "      DLL's own dependencies relative to the main executable's folder," -ForegroundColor Cyan
+Write-Host "      not the extension's folder, which ext\ alone doesn't cover." -ForegroundColor Cyan
+$apacheBinDir = Join-Path $OutDir "apache\bin"
+Get-ChildItem -Path $phpRoot -Filter "*.dll" -File -ErrorAction SilentlyContinue | ForEach-Object {
+  $dest = Join-Path $apacheBinDir $_.Name
+  if (-not (Test-Path $dest)) {
+    # Only add DLLs Apache doesn't already have -- never overwrite Apache's
+    # own bundled versions of a same-named file (e.g. if it ships its own
+    # OpenSSL DLLs for mod_ssl, even if unused today).
+    Copy-Item -Path $_.FullName -Destination $dest
+  }
+}
 
 # The vendor MariaDB zip ships its own empty data/ folder -- Helm generates
 # its own under the per-user DATA ROOT at first run, so drop the vendor one
