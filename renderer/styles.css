@@ -309,6 +309,7 @@ button {
   padding: 8px 0;
 }
 
+<<<<<<< HEAD
 .wordmark {
   display: flex;
   align-items: center;
@@ -318,13 +319,24 @@ button {
   height: 30px;
   width: auto;
   display: block;
+=======
+.wordmark-main {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.14em;
+  color: var(--brass-bright);
+>>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac
 }
 
 .wordmark-sub {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--steel-grey);
+<<<<<<< HEAD
   margin-left: 14px;
+=======
+  margin-left: 12px;
+>>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac
 }
 
 .bridge {

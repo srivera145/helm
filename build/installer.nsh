@@ -11,6 +11,7 @@
 ;
 ; allowToChangeInstallationDirectory stays enabled in package.json, so this
 ; is only the *default* -- the installer's directory-picker page still lets
+<<<<<<< HEAD
 ; you choose a different location if you want one, and that manual override
 ; always works regardless of anything below.
 ;
@@ -33,8 +34,14 @@
 !macro customHeader
   InstallDir "C:\Helm"
 !macroend
+=======
+; you choose a different location if you want one.
+>>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac
 
 !macro customInit
   StrCpy $INSTDIR "C:\Helm"
 !macroend
+<<<<<<< HEAD
 
+=======
+>>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac

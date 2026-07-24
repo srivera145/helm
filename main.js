@@ -176,12 +176,17 @@ ipcMain.handle('shell:open', (_evt, url) => {
   } catch (err) {
     return { ok: false, error: 'Invalid URL' };
   }
+<<<<<<< HEAD
   // localhost/127.0.0.1 for the default site, plus *.local for Sites-panel
   // domains -- both are always Helm's own local Apache, never anywhere else.
   const isLocalHost = /^(localhost|127\.0\.0\.1)$/.test(parsed.hostname);
   const isDotLocal = /^[a-z0-9-]+(\.[a-z0-9-]+)*\.local$/i.test(parsed.hostname);
   if (!(isLocalHost || isDotLocal) || parsed.protocol !== 'http:') {
     return { ok: false, error: 'Only local Helm URLs can be opened (localhost or *.local)' };
+=======
+  if (!/^(localhost|127\.0\.0\.1)$/.test(parsed.hostname) || parsed.protocol !== 'http:') {
+    return { ok: false, error: 'Only http://localhost URLs can be opened' };
+>>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac
   }
   shell.openExternal(url);
   return { ok: true };

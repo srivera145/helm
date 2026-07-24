@@ -377,9 +377,14 @@ async function refreshSitesList() {
   });
 
   list.querySelectorAll('[data-open-site]').forEach((btn) => {
+<<<<<<< HEAD
     btn.addEventListener('click', async () => {
       const res = await window.helm.openInBrowser(`http://${btn.dataset.openSite}/`);
       if (!res.ok) alert(`Could not open the site: ${res.error}`);
+=======
+    btn.addEventListener('click', () => {
+      window.helm.openInBrowser(`http://${btn.dataset.openSite}/`);
+>>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac
     });
   });
 

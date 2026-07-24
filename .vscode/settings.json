@@ -4,10 +4,17 @@
     "editor.insertSpaces": true,
     "files.autoSave": "onWindowChange",
     "files.exclude": {
+<<<<<<< HEAD
         "**/.git": true,
         "**/node_modules": true,
         "**/vendor": false,
         "**/dist": true
+=======
+        "**/.git": false,
+        "**/node_modules": false,
+        "**/vendor": false,
+        "**/dist": false
+>>>>>>> b1dbe9de81cd4382b23fe705ce2962b4202883ac
     },
     "javascript.validate.enable": false,
     "typescript.validate.enable": false,

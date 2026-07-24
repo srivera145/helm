@@ -1,7 +1,7 @@
 {
   "name": "helm",
   "productName": "Helm",
-  "version": "0.1.2",
+  "version": "0.1.",
   "description": "A stable local dev server control panel for Apache, PHP, and MySQL on Windows \u2014 built to replace XAMPP's control panel and its InnoDB corruption problem. Companion tool to Keel.",
   "author": "Santos Rivera",
   "license": "MIT",
